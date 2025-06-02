@@ -149,6 +149,28 @@ impl RevmExecutor {
         }
     }
 
+    pub fn save_state_to_world(&mut self, state: &mut WorldState) -> Result<(), String> {
+        for (address, _) in &state.accounts.clone() {
+            let evm_addr = rAddress::from_slice(address.as_bytes());
+
+            if let Ok(Some(account_info)) = self.evm.context.evm.db.basic(evm_addr) {
+                let account = state.get_account_mut(address);
+                account.balance = revm_u256_to_ethereum_u256(account_info.balance);
+                account.nonce = account_info.nonce;
+
+                if let Some(code) = account_info.code {
+                    account.code = code.bytes().to_vec();
+                    if !account.code.is_empty() {
+                        use sha3::{Digest, Keccak256};
+                        account.code_hash = H256::from_slice(&Keccak256::digest(&account.code));
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn deploy_contract(
         &mut self,
         deployer: Address,
@@ -379,7 +401,7 @@ mod tests {
 
     #[test]
     fn test_revm_creation() {
-        let executor = RevmExecutor::new(1, 1234567890, Address::from([1u8; 20]), 30_000_000_000_000_000);
+        let executor = RevmExecutor::new(1, 1234567890, Address::from([1u8; 20]), 9000_000_000_000_000_000);
         assert!(true);
     }
 

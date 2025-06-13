@@ -20,3 +20,4 @@ tower-http = {version = "0.5", features = ["cors"]}
 uuid = {version = "1", features = ["v4"]}
 
 tokio-test = "0.4"
+warp = "0.3.7"
